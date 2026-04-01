@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriFlux</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg bg-1"></div>
+  <div class="bg bg-2"></div>
+
+  <main class="app-shell">
+    <section class="hero-card">
+      <div class="brand-row">
+        <div class="brand-badge">IA Nutricional</div>
+        <div class="status-pill">Online</div>
+      </div>
+
+      <h1>Nutri<span>Flux</span></h1>
+      <p class="hero-text">
+        Plano alimentar inteligente, rápido e com aparência de consultoria premium.
+      </p>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <span class="metric-title">Foco</span>
+          <strong>Performance</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Tempo médio</span>
+          <strong>Segundos</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">Estilo</span>
+          <strong>Premium</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-grid">
+      <section class="input-panel glass-card">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Dados do usuário</p>
+            <h2>Montar plano</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="peso">Peso</label>
+            <input id="peso" type="number" placeholder="Ex: 78" />
+          </div>
+
+          <div class="field">
+            <label for="altura">Altura</label>
+            <input id="altura" type="number" placeholder="Ex: 178" />
+          </div>
+
+          <div class="field">
+            <label for="idade">Idade</label>
+            <input id="idade" type="number" placeholder="Ex: 22" />
+          </div>
+
+          <div class="field">
+            <label for="objetivo">Objetivo</label>
+            <select id="objetivo">
+              <option value="">Selecione</option>
+              <option value="Emagrecer">Emagrecer</option>
+              <option value="Ganhar massa">Ganhar massa</option>
+              <option value="Manter peso">Manter peso</option>
+              <option value="Recomposição corporal">Recomposição corporal</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="gerarBtn" class="primary-btn" onclick="gerarDieta()">
+          Gerar plano NutriFlux
+        </button>
+
+        <p class="helper-text">
+          Dica: depois a gente pode evoluir isso para login, histórico e plano pago.
+        </p>
+      </section>
+
+      <section class="output-panel glass-card">
+        <div class="panel-header result-header">
+          <div>
+            <p class="eyebrow">Resultado</p>
+            <h2>Plano gerado</h2>
+          </div>
+
+          <button id="copiarBtn" class="ghost-btn" onclick="copiarResultado()">
+            Copiar
+          </button>
+        </div>
+
+        <div id="resultado" class="resultado">
+          <div class="placeholder">
+            <div class="placeholder-icon">⚡</div>
+            <h3>Seu plano vai aparecer aqui</h3>
+            <p>
+              Preencha os dados e clique em gerar para criar o plano alimentar premium.
+            </p>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
