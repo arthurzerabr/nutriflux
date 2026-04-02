@@ -38,9 +38,9 @@ app.post("/gerar", async (req, res) => {
 
     const prompt = menorDeIdade
       ? `
-Você é o NutriFlux, uma IA nutricional premium.
+Você é o NutriFlux.
 
-Crie uma resposta SEGURA, ÚTIL e COMPLETA para um usuário menor de idade.
+Crie uma resposta CURTA, COMPLETA e SEGURA para um usuário menor de idade.
 
 Dados:
 Nome: ${nome}
@@ -51,23 +51,21 @@ Objetivo: ${objetivo}
 
 REGRAS:
 - Responda em português do Brasil.
-- Não escreva saudação.
-- Não escreva introdução longa.
-- Não faça prescrição agressiva.
-- Não monte dieta restritiva.
-- Foque em orientações gerais, hábitos saudáveis, regularidade alimentar e alimentos acessíveis.
-- Oriente procurar nutricionista/responsável se quiser algo totalmente individualizado.
-- Comece DIRETAMENTE na estrutura abaixo.
+- Sem saudação.
+- Sem introdução.
+- Sem texto motivacional.
+- Seja curto e direto.
 - Não pare no meio.
+- Use no máximo 2 itens por seção.
+- Comece direto na estrutura abaixo.
 
 ESTRUTURA EXATA:
 
 🔥 FOCO PRINCIPAL
-- Objetivo informado: ...
+- Objetivo: ...
 - Estratégia segura: ...
-- Prioridade nutricional: ...
 
-🥗 ORIENTAÇÕES ALIMENTARES DO DIA
+🥗 ORIENTAÇÕES DO DIA
 Café da manhã:
 - ...
 - ...
@@ -80,12 +78,7 @@ Jantar:
 - ...
 - ...
 
-Lanches:
-- ...
-- ...
-
 💡 DICAS
-- ...
 - ...
 - ...
 
@@ -93,39 +86,36 @@ Lanches:
 - ...
 `
       : `
-Você é o NutriFlux, uma IA nutricional premium.
+Você é o NutriFlux.
 
-Tarefa:
-Crie um plano alimentar COMPLETO, direto e totalmente preenchido.
+Crie um plano alimentar CURTO, COMPLETO e DIRETO.
 
-Dados do usuário:
+Dados:
 Nome: ${nome}
 Peso: ${peso}kg
 Altura: ${altura}cm
 Idade: ${idade}
 Objetivo: ${objetivo}
 
-REGRAS OBRIGATÓRIAS:
+REGRAS:
 - Responda em português do Brasil.
-- Não escreva introdução.
-- Não escreva saudação.
-- Não use frases como "Vamos estruturar", "Vamos começar", "Olá".
-- Comece DIRETAMENTE em "🔥 CALORIAS DIÁRIAS".
+- Sem saudação.
+- Sem introdução.
+- Sem texto motivacional.
+- Não use frases como "Vamos estruturar".
+- Comece direto em "🔥 CALORIAS DIÁRIAS".
 - Não pare no meio.
-- Preencha TODAS as seções.
-- Use alimentos reais e acessíveis.
-- Seja objetivo.
+- Use no máximo 2 itens por seção.
+- Seja curto e objetivo.
 - Não escreva nada fora da estrutura abaixo.
 
-ESTRUTURA EXATA DA RESPOSTA:
+ESTRUTURA EXATA:
 
 🔥 CALORIAS DIÁRIAS
 - Faixa estimada: ...
-- Proteína diária: ...
 - Estratégia: ...
 
 🥗 PLANO ALIMENTAR
-
 Café da manhã:
 - ...
 - ...
@@ -138,12 +128,7 @@ Jantar:
 - ...
 - ...
 
-Lanches:
-- ...
-- ...
-
 💡 DICAS
-- ...
 - ...
 - ...
 
@@ -172,8 +157,8 @@ Lanches:
             }
           ],
           generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 2200
+            temperature: 0.2,
+            maxOutputTokens: 1800
           }
         }),
         signal: controller.signal
@@ -185,6 +170,8 @@ Lanches:
     console.log(`📡 Gemini respondeu com status ${response.status}`);
 
     const data = await response.json();
+
+    console.log("🧾 finishReason:", data?.candidates?.[0]?.finishReason || "sem finishReason");
 
     if (!response.ok) {
       console.log("❌ Erro retornado pelo Gemini:", JSON.stringify(data));
@@ -202,7 +189,7 @@ Lanches:
     const respostaValidaMenor =
       texto &&
       texto.includes("🔥 FOCO PRINCIPAL") &&
-      texto.includes("🥗 ORIENTAÇÕES ALIMENTARES DO DIA") &&
+      texto.includes("🥗 ORIENTAÇÕES DO DIA") &&
       texto.includes("💡 DICAS") &&
       texto.includes("📌 AJUSTE FINAL");
 
@@ -215,6 +202,7 @@ Lanches:
 
     if ((menorDeIdade && !respostaValidaMenor) || (!menorDeIdade && !respostaValidaAdulto)) {
       console.log("❌ Gemini respondeu de forma incompleta");
+      console.log("📝 Texto recebido:", texto);
       return res.status(502).json({
         erro: "A IA respondeu de forma incompleta. Tente novamente."
       });
