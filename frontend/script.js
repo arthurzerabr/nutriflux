@@ -1,3 +1,5 @@
+const API_URL = "https://nutriflux-1.onrender.com/gerar";
+
 function formatarTexto(texto) {
   const linhas = texto.split("\n");
   let html = "";
@@ -59,16 +61,25 @@ function formatarTexto(texto) {
 function mostrarLoading() {
   return `
     <div class="loading-wrap">
-      <div class="loading-title">Gerando seu plano NutriFlux...</div>
+      <div class="loading-title">⚡ Criando seu plano NutriFlux...</div>
       <div class="loading-bar"><span></span></div>
       <div class="loading-note">
-        A IA está montando um plano alimentar com estrutura premium.
+        Analisando seu perfil e montando um plano alimentar premium.
       </div>
     </div>
   `;
 }
 
+function restaurarUltimaDieta() {
+  const resultado = document.getElementById("resultado");
+  const ultima = localStorage.getItem("nutriflux_ultima_dieta");
+
+  if (!ultima) return;
+  resultado.innerHTML = ultima;
+}
+
 async function gerarDieta() {
+  const nome = document.getElementById("nome").value.trim();
   const peso = document.getElementById("peso").value.trim();
   const altura = document.getElementById("altura").value.trim();
   const idade = document.getElementById("idade").value.trim();
@@ -76,12 +87,12 @@ async function gerarDieta() {
   const resultado = document.getElementById("resultado");
   const gerarBtn = document.getElementById("gerarBtn");
 
-  if (!peso || !altura || !idade || !objetivo) {
+  if (!nome || !peso || !altura || !idade || !objetivo) {
     resultado.innerHTML = `
       <div class="placeholder">
         <div class="placeholder-icon">⚠️</div>
         <h3>Dados incompletos</h3>
-        <p>Preencha peso, altura, idade e objetivo antes de gerar o plano.</p>
+        <p>Preencha nome, peso, altura, idade e objetivo antes de gerar o plano.</p>
       </div>
     `;
     return;
@@ -92,18 +103,25 @@ async function gerarDieta() {
   resultado.innerHTML = mostrarLoading();
 
   try {
-    const response = await fetch("https://nutriflux-1.onrender.com/gerar", {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 100000);
+
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        nome,
         peso,
         altura,
         idade,
         objetivo
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeout);
 
     const data = await response.json();
 
@@ -134,16 +152,29 @@ async function gerarDieta() {
       return;
     }
 
-    resultado.innerHTML = formatarTexto(texto);
+    const htmlFinal = formatarTexto(texto);
+    resultado.innerHTML = htmlFinal;
+    localStorage.setItem("nutriflux_ultima_dieta", htmlFinal);
   } catch (erro) {
     console.error("ERRO DE CONEXÃO:", erro);
-    resultado.innerHTML = `
-      <div class="placeholder">
-        <div class="placeholder-icon">🌐</div>
-        <h3>Erro de conexão</h3>
-        <p>Não consegui falar com o backend em https://nutriflux-1.onrender.com/gerar.</p>
-      </div>
-    `;
+
+    if (erro.name === "AbortError") {
+      resultado.innerHTML = `
+        <div class="placeholder">
+          <div class="placeholder-icon">⏳</div>
+          <h3>A requisição demorou demais</h3>
+          <p>Tente novamente em alguns segundos.</p>
+        </div>
+      `;
+    } else {
+      resultado.innerHTML = `
+        <div class="placeholder">
+          <div class="placeholder-icon">🌐</div>
+          <h3>Erro de conexão</h3>
+          <p>Não consegui falar com o backend do NutriFlux.</p>
+        </div>
+      `;
+    }
   } finally {
     gerarBtn.disabled = false;
     gerarBtn.textContent = "Gerar plano NutriFlux";
@@ -170,3 +201,5 @@ async function copiarResultado() {
     console.error("Erro ao copiar:", erro);
   }
 }
+
+window.addEventListener("DOMContentLoaded", restaurarUltimaDieta);
