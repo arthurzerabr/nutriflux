@@ -22,44 +22,110 @@ app.post("/gerar", async (req, res) => {
     console.log("➡️ Nova requisição /gerar recebida");
 
     if (!nome || !peso || !altura || !idade || !objetivo) {
-      console.log("❌ Dados incompletos");
       return res.status(400).json({
         erro: "Preencha nome, peso, altura, idade e objetivo."
       });
     }
 
     if (!process.env.GEMINI_API_KEY) {
-      console.log("❌ GEMINI_API_KEY não configurada");
       return res.status(500).json({
         erro: "GEMINI_API_KEY não configurada."
       });
     }
 
-    const prompt = `
-Você é o NutriFlux, uma IA nutricional premium, prática e moderna.
+    const idadeNumero = Number(idade);
+    const menorDeIdade = !Number.isNaN(idadeNumero) && idadeNumero < 18;
 
-Crie um plano alimentar personalizado para o usuário abaixo:
+    const prompt = menorDeIdade
+      ? `
+Você é o NutriFlux, uma IA nutricional premium.
 
+Crie uma resposta SEGURA, ÚTIL e COMPLETA para um usuário menor de idade.
+
+Dados:
 Nome: ${nome}
 Peso: ${peso}kg
 Altura: ${altura}cm
 Idade: ${idade}
 Objetivo: ${objetivo}
 
-Regras:
+REGRAS:
 - Responda em português do Brasil.
-- Seja objetivo e útil.
-- Use alimentos reais e acessíveis.
-- Não use linguagem genérica.
-- Organize de forma bonita.
-- Faça parecer uma consultoria premium.
+- Não escreva saudação.
+- Não escreva introdução longa.
+- Não faça prescrição agressiva.
+- Não monte dieta restritiva.
+- Foque em orientações gerais, hábitos saudáveis, regularidade alimentar e alimentos acessíveis.
+- Oriente procurar nutricionista/responsável se quiser algo totalmente individualizado.
+- Comece DIRETAMENTE na estrutura abaixo.
+- Não pare no meio.
 
-Formato exato da resposta:
+ESTRUTURA EXATA:
+
+🔥 FOCO PRINCIPAL
+- Objetivo informado: ...
+- Estratégia segura: ...
+- Prioridade nutricional: ...
+
+🥗 ORIENTAÇÕES ALIMENTARES DO DIA
+Café da manhã:
+- ...
+- ...
+
+Almoço:
+- ...
+- ...
+
+Jantar:
+- ...
+- ...
+
+Lanches:
+- ...
+- ...
+
+💡 DICAS
+- ...
+- ...
+- ...
+
+📌 AJUSTE FINAL
+- ...
+`
+      : `
+Você é o NutriFlux, uma IA nutricional premium.
+
+Tarefa:
+Crie um plano alimentar COMPLETO, direto e totalmente preenchido.
+
+Dados do usuário:
+Nome: ${nome}
+Peso: ${peso}kg
+Altura: ${altura}cm
+Idade: ${idade}
+Objetivo: ${objetivo}
+
+REGRAS OBRIGATÓRIAS:
+- Responda em português do Brasil.
+- Não escreva introdução.
+- Não escreva saudação.
+- Não use frases como "Vamos estruturar", "Vamos começar", "Olá".
+- Comece DIRETAMENTE em "🔥 CALORIAS DIÁRIAS".
+- Não pare no meio.
+- Preencha TODAS as seções.
+- Use alimentos reais e acessíveis.
+- Seja objetivo.
+- Não escreva nada fora da estrutura abaixo.
+
+ESTRUTURA EXATA DA RESPOSTA:
 
 🔥 CALORIAS DIÁRIAS
-(valor estimado + observação curta)
+- Faixa estimada: ...
+- Proteína diária: ...
+- Estratégia: ...
 
 🥗 PLANO ALIMENTAR
+
 Café da manhã:
 - ...
 - ...
@@ -82,14 +148,12 @@ Lanches:
 - ...
 
 📌 AJUSTE ESTRATÉGICO
-(uma recomendação final curta e inteligente)
+- ...
 `;
 
     const controller = new AbortController();
     const timeoutMs = 90000;
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     console.log("⏳ Chamando Gemini...");
 
@@ -108,8 +172,8 @@ Lanches:
             }
           ],
           generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 1200
+            temperature: 0.3,
+            maxOutputTokens: 2200
           }
         }),
         signal: controller.signal
@@ -135,10 +199,24 @@ Lanches:
       .join("\n")
       .trim();
 
-    if (!texto) {
-      console.log("❌ Gemini respondeu sem texto útil");
+    const respostaValidaMenor =
+      texto &&
+      texto.includes("🔥 FOCO PRINCIPAL") &&
+      texto.includes("🥗 ORIENTAÇÕES ALIMENTARES DO DIA") &&
+      texto.includes("💡 DICAS") &&
+      texto.includes("📌 AJUSTE FINAL");
+
+    const respostaValidaAdulto =
+      texto &&
+      texto.includes("🔥 CALORIAS DIÁRIAS") &&
+      texto.includes("🥗 PLANO ALIMENTAR") &&
+      texto.includes("💡 DICAS") &&
+      texto.includes("📌 AJUSTE ESTRATÉGICO");
+
+    if ((menorDeIdade && !respostaValidaMenor) || (!menorDeIdade && !respostaValidaAdulto)) {
+      console.log("❌ Gemini respondeu de forma incompleta");
       return res.status(502).json({
-        erro: "A IA respondeu sem conteúdo."
+        erro: "A IA respondeu de forma incompleta. Tente novamente."
       });
     }
 
